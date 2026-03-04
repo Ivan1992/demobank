@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install)",
+      "Bash(node -e \":*)",
+      "Bash(netstat -ano)",
+      "Bash(powershell -Command \"Stop-Process -Id 43268 -Force -ErrorAction SilentlyContinue; Start-Sleep -Seconds 1; Write-Host ''PID 43268 killed''\")",
+      "Bash(curl -s -X POST http://localhost:3000/api/auth/login -H \"Content-Type: application/json\" -d \"{\"\"username\"\":\"\"ivanov\"\",\"\"password\"\":\"\"password123\"\"}\")",
+      "Bash(powershell -Command \":*)",
+      "WebFetch(domain:kasperskyfuture.ru)"
+    ]
+  }
+}

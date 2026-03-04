@@ -1,0 +1,3 @@
+node_modules/
+backend/bank.db
+.env

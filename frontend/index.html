@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DemoBank — Вход</title>
+  <link rel="stylesheet" href="/css/style.css" />
+  <script src="/js/das.js"></script>
+</head>
+<body>
+<script>if(localStorage.getItem('db_theme')==='light')document.body.classList.add('light-theme');</script>
+  <div class="login-page">
+    <div class="login-wrapper">
+
+      <div class="login-brand">
+        <div class="logo-icon">🏦</div>
+        <h1>DemoBank</h1>
+        <p>Дистанционное банковское обслуживание</p>
+      </div>
+
+      <div class="card login-card">
+        <h2>Добро пожаловать</h2>
+        <p class="subtitle">Войдите в личный кабинет</p>
+
+        <div id="alert" class="alert alert-error hidden"></div>
+
+        <form id="loginForm" novalidate>
+          <div class="form-group">
+            <label for="username">Логин или e-mail</label>
+            <input
+              type="text"
+              id="username"
+              name="username"
+              placeholder="ivanov"
+              autocomplete="username"
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="password">Пароль</label>
+            <input
+              type="password"
+              id="password"
+              name="password"
+              placeholder="••••••••"
+              autocomplete="current-password"
+              required
+            />
+          </div>
+          <input type="hidden" id="ksid" name="ksid" value="">
+          <button type="submit" class="btn btn-primary btn-full" id="submitBtn">
+            Войти
+          </button>
+          <button type="button" class="btn-theme-toggle" id="themeToggle"
+            style="width:100%; margin-top:10px;" onclick="toggleTheme()">☀️ Светлая тема</button>
+        </form>
+
+        <div class="demo-hint">
+          <strong>Демо-доступ</strong>
+          Логин: <code>ivanov</code> / <code>sidorova</code> / <code>kozlov</code><br />
+          Пароль для всех: <code>password123</code>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/auth.js"></script>
+  <script>
+    function toggleTheme() {
+      const isLight = document.body.classList.toggle('light-theme');
+      localStorage.setItem('db_theme', isLight ? 'light' : 'dark');
+      const btn = document.getElementById('themeToggle');
+      btn.textContent = isLight ? '🌙 Тёмная тема' : '☀️ Светлая тема';
+    }
+    document.getElementById('themeToggle').textContent =
+      document.body.classList.contains('light-theme') ? '🌙 Тёмная тема' : '☀️ Светлая тема';
+  </script>
+</body>
+</html>
