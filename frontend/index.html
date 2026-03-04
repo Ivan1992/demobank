@@ -8,7 +8,7 @@
   <script src="/js/das.js"></script>
 </head>
 <body>
-<script>if(localStorage.getItem('db_theme')==='light')document.body.classList.add('light-theme');</script>
+<script>if(localStorage.getItem('db_theme')==='dark')document.body.classList.add('dark-theme');</script>
   <div class="login-page">
     <div class="login-wrapper">
 
@@ -53,7 +53,7 @@
             Войти
           </button>
           <button type="button" class="btn-theme-toggle" id="themeToggle"
-            style="width:100%; margin-top:10px;" onclick="toggleTheme()">☀️ Светлая тема</button>
+            style="width:100%; margin-top:10px;" onclick="toggleTheme()">🌙 Тёмная тема</button>
         </form>
 
         <div class="demo-hint">
@@ -70,13 +70,13 @@
   <script src="/js/auth.js"></script>
   <script>
     function toggleTheme() {
-      const isLight = document.body.classList.toggle('light-theme');
-      localStorage.setItem('db_theme', isLight ? 'light' : 'dark');
+      const isDark = document.body.classList.toggle('dark-theme');
+      localStorage.setItem('db_theme', isDark ? 'dark' : 'light');
       const btn = document.getElementById('themeToggle');
-      btn.textContent = isLight ? '🌙 Тёмная тема' : '☀️ Светлая тема';
+      btn.textContent = isDark ? '☀️ Светлая тема' : '🌙 Тёмная тема';
     }
     document.getElementById('themeToggle').textContent =
-      document.body.classList.contains('light-theme') ? '🌙 Тёмная тема' : '☀️ Светлая тема';
+      document.body.classList.contains('dark-theme') ? '☀️ Светлая тема' : '🌙 Тёмная тема';
   </script>
 </body>
 </html>
