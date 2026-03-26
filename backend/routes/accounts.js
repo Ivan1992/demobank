@@ -1,59 +1,11 @@
 const express = require('express');
-const https = require('https');
 const router = express.Router();
 const db = require('../db');
 const auth = require('../middleware/authMiddleware');
+const { checkKasperskyOperation } = require('../kfp');
+const { callTalys } = require('../talys');
 
 router.use(auth);
-
-function checkKasperskyOperation(ksid, operation_type, value, comment) {
-  return new Promise((resolve) => {
-    const params = new URLSearchParams({
-      cid: 'demobank',
-      ksid: ksid || 'empty',
-      phase: 'post_login',
-      action: 'risk_level',
-      'rule-details': '1',
-    });
-    const body = JSON.stringify({ operation_type, value: String(value), comment: comment || '' });
-    const urlObj = new URL(`https://connect-romanovka.fp.kaspersky-labs.com/events?${params}`);
-    const fullUrl = urlObj.toString();
-
-    const req = https.request(
-      {
-        hostname: urlObj.hostname,
-        path: urlObj.pathname + urlObj.search,
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Content-Length': Buffer.byteLength(body),
-        },
-      },
-      (resp) => {
-        let data = '';
-        resp.on('data', (chunk) => { data += chunk; });
-        resp.on('end', () => {
-          let parsed = null;
-          try { parsed = JSON.parse(data); } catch { /* ignore */ }
-          try {
-            db.prepare(
-              'INSERT INTO kfp_log (request_url, request_body, response_level, response_rule_versions, response_raw) VALUES (?, ?, ?, ?, ?)'
-            ).run(
-              fullUrl, body,
-              parsed?.level ?? null,
-              parsed?.['rule_versions'] != null ? JSON.stringify(parsed['rule_versions']) : null,
-              data || null
-            );
-          } catch { /* never break main flow */ }
-          resolve(parsed);
-        });
-      }
-    );
-    req.on('error', () => resolve(null));
-    req.write(body);
-    req.end();
-  });
-}
 
 // GET /api/accounts
 router.get('/', (req, res) => {
@@ -114,7 +66,7 @@ router.get('/check-client/:query', (req, res) => {
 
 // POST /api/accounts/deposit
 router.post('/deposit', async (req, res) => {
-  const { account_id, amount, description } = req.body;
+  const { account_id, amount, description, talys_enabled } = req.body;
 
   if (!account_id || !amount || Number(amount) <= 0) {
     return res.status(400).json({ message: 'Укажите счёт и корректную сумму' });
@@ -123,6 +75,8 @@ router.post('/deposit', async (req, res) => {
   const sum = Number(amount);
 
   const risk = await checkKasperskyOperation(req.ksid, 'deposit', sum, description);
+  const currentUser = db.prepare('SELECT username FROM users WHERE id = ?').get(req.userId);
+  callTalys(risk, { eventType: 'depositCard', beneficiaryID: currentUser?.username, amount: sum, enabled: talys_enabled !== false });
   if (risk?.level === 'red') {
     return res.status(403).json({ message: 'Операция заблокирована системой безопасности' });
   }
@@ -146,7 +100,7 @@ router.post('/deposit', async (req, res) => {
 
 // POST /api/accounts/transfer — transfer by account number
 router.post('/transfer', async (req, res) => {
-  const { from_account_id, to_account_number, amount, description } = req.body;
+  const { from_account_id, to_account_number, amount, description, talys_enabled } = req.body;
 
   if (!from_account_id || !to_account_number || !amount || Number(amount) <= 0) {
     return res.status(400).json({ message: 'Заполните все поля корректно' });
@@ -172,10 +126,14 @@ router.post('/transfer', async (req, res) => {
     return res.status(400).json({ message: 'Недостаточно средств' });
   }
 
-  const toAccount = db
-    .prepare('SELECT * FROM accounts WHERE account_number = ?')
-    .get(to_account_number);
+  const toAccount = db.prepare(`
+    SELECT a.*, u.username AS owner_username
+    FROM accounts a JOIN users u ON a.user_id = u.id
+    WHERE a.account_number = ?
+  `).get(to_account_number);
   if (!toAccount) return res.status(404).json({ message: 'Счёт получателя не найден' });
+
+  callTalys(risk, { eventType: 'p2p_debit', beneficiaryID: toAccount.owner_username, amount: sum, enabled: talys_enabled !== false });
 
   const doTransfer = db.transaction(() => {
     db.prepare('UPDATE accounts SET balance = balance - ? WHERE id = ?').run(sum, fromAccount.id);
@@ -192,7 +150,7 @@ router.post('/transfer', async (req, res) => {
 
 // POST /api/accounts/transfer-to-client — transfer by username or email
 router.post('/transfer-to-client', async (req, res) => {
-  const { from_account_id, client_query, amount, description } = req.body;
+  const { from_account_id, client_query, amount, description, talys_enabled } = req.body;
 
   if (!from_account_id || !client_query || !amount || Number(amount) <= 0) {
     return res.status(400).json({ message: 'Заполните все поля корректно' });
@@ -218,6 +176,8 @@ router.post('/transfer-to-client', async (req, res) => {
     .prepare('SELECT * FROM users WHERE (username = ? OR email = ?) AND id != ?')
     .get(client_query, client_query, req.userId);
   if (!toUser) return res.status(404).json({ message: 'Клиент не найден в системе' });
+
+  callTalys(risk, { eventType: 'p2p_debit', beneficiaryID: toUser.username, amount: sum, enabled: talys_enabled !== false });
 
   const toAccount = db
     .prepare('SELECT * FROM accounts WHERE user_id = ? ORDER BY id ASC LIMIT 1')

@@ -3,13 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>KFP Event Log — DemoBank</title>
+  <title>Talys Event Log — DemoBank</title>
   <link rel="stylesheet" href="/css/style.css" />
   <style>
     body { background: var(--bg); padding: 32px 24px; }
 
     .page-header {
-      max-width: 1500px;
+      max-width: 1200px;
       margin: 0 auto 24px;
       display: flex;
       align-items: center;
@@ -21,7 +21,7 @@
     .page-header p { color: var(--text-muted); font-size: 14px; margin-top: 2px; }
 
     .log-card {
-      max-width: 1500px;
+      max-width: 1200px;
       margin: 0 auto;
       background: var(--card);
       border-radius: var(--radius);
@@ -51,17 +51,10 @@
     tbody tr:hover { background: rgba(0,168,142,0.05); }
     td { padding: 10px 14px; vertical-align: top; color: var(--text); }
 
-    .td-date { white-space: nowrap; color: var(--text-muted); font-size: 12px; min-width: 140px; }
-    .td-url {
-      max-width: 340px;
-      word-break: break-all;
-      font-family: 'Courier New', monospace;
-      font-size: 11px;
-      color: var(--accent);
-    }
-    .td-body  { max-width: 260px; }
-    .td-rules { max-width: 240px; }
-    .td-level { text-align: center; }
+    .td-date  { white-space: nowrap; color: var(--text-muted); font-size: 12px; min-width: 140px; }
+    .td-type  { white-space: nowrap; }
+    .td-body  { max-width: 600px; }
+    .td-status { text-align: center; }
 
     .code-block {
       background: var(--bg);
@@ -73,7 +66,7 @@
       white-space: pre-wrap;
       word-break: break-all;
       color: rgba(255,255,255,0.7);
-      max-height: 120px;
+      max-height: 160px;
       overflow-y: auto;
     }
 
@@ -83,13 +76,22 @@
       border-radius: 20px;
       font-size: 12px;
       font-weight: 700;
-      text-transform: uppercase;
       letter-spacing: 0.04em;
     }
-    .badge-green  { background: rgba(0,168,142,0.2);  color: #3de8ca; }
-    .badge-yellow { background: rgba(255,190,100,0.2); color: #ffbe64; }
-    .badge-red    { background: rgba(255,51,85,0.2);  color: #ff6680; }
-    .badge-null   { background: rgba(255,255,255,0.07); color: rgba(255,255,255,0.4); }
+    .badge-ok   { background: rgba(0,168,142,0.2);   color: #3de8ca; }
+    .badge-warn { background: rgba(255,190,100,0.2);  color: #ffbe64; }
+    .badge-err  { background: rgba(255,51,85,0.2);   color: #ff6680; }
+    .badge-null { background: rgba(255,255,255,0.07); color: rgba(255,255,255,0.4); }
+
+    .event-tag {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 4px;
+      background: rgba(0,168,142,0.15);
+      color: var(--accent);
+    }
 
     .empty-log {
       text-align: center;
@@ -106,33 +108,15 @@
       border-bottom: 1px solid var(--border);
     }
     .row-count { font-size: 13px; color: var(--text-muted); margin-left: auto; }
-
-    .phase-tag {
-      display: inline-block;
-      font-size: 10px;
-      font-weight: 600;
-      padding: 2px 6px;
-      border-radius: 4px;
-      background: rgba(0,168,142,0.15);
-      color: var(--accent);
-      margin-bottom: 4px;
-    }
-
-    .td-ext { max-width: 220px; }
-    .ext-data { font-size: 11px; line-height: 1.7; }
-    .ext-key { color: var(--text-muted); font-weight: 600; }
   </style>
   <style>
-    /* Light theme overrides for inline styles */
     body.light-theme .code-block { color: rgba(29,54,83,0.8); background: #f4f7fa; }
-    body.light-theme .td-url { color: var(--primary); }
     body.light-theme tbody tr:hover { background: rgba(0,168,142,0.04); }
-    body.light-theme .badge-green  { background: rgba(0,168,142,0.12); color: #007a69; }
-    body.light-theme .badge-yellow { background: rgba(180,120,0,0.12);  color: #8a6000; }
-    body.light-theme .badge-red    { background: rgba(255,51,85,0.10);  color: #cc1f3f; }
-    body.light-theme .badge-null   { background: rgba(29,54,83,0.08);   color: rgba(29,54,83,0.5); }
-    body.light-theme .phase-tag    { background: rgba(0,168,142,0.1); color: #007a69; }
-    body.light-theme .ext-key      { color: var(--text-muted); }
+    body.light-theme .badge-ok   { background: rgba(0,168,142,0.12);  color: #007a69; }
+    body.light-theme .badge-warn { background: rgba(180,120,0,0.12);  color: #8a6000; }
+    body.light-theme .badge-err  { background: rgba(255,51,85,0.10);  color: #cc1f3f; }
+    body.light-theme .badge-null { background: rgba(29,54,83,0.08);   color: rgba(29,54,83,0.5); }
+    body.light-theme .event-tag  { background: rgba(0,168,142,0.1);   color: #007a69; }
   </style>
 </head>
 <body>
@@ -140,13 +124,13 @@
 
 <div class="page-header">
   <div>
-    <h1>KFP Event Log</h1>
-    <p>Журнал запросов к Kaspersky Fraud Prevention</p>
+    <h1>Talys Event Log</h1>
+    <p>Журнал запросов к транзакционному антифроду</p>
   </div>
   <div style="display:flex; gap:10px; align-items:center;">
     <button class="btn btn-outline" onclick="loadLog()">↺ Обновить</button>
     <button class="btn-theme-toggle" id="themeToggle" onclick="toggleTheme()">☀️</button>
-    <a href="/talys-log.html" class="btn btn-secondary">📡 Talys Log</a>
+    <a href="/kfp-log.html" class="btn btn-secondary">🛡️ KFP Log</a>
     <a href="/dashboard.html" class="btn btn-secondary">← Dashboard</a>
   </div>
 </div>
@@ -173,47 +157,11 @@
     });
   }
 
-  function levelBadge(level) {
-    if (!level) return '<span class="badge badge-null">—</span>';
-    const cls = { green: 'badge-green', yellow: 'badge-yellow', red: 'badge-red' }[level] || 'badge-null';
-    return `<span class="badge ${cls}">${level}</span>`;
-  }
-
-  function phaseFromUrl(url) {
-    try {
-      const p = new URL(url).searchParams.get('phase');
-      return p ? `<span class="phase-tag">${p}</span><br>` : '';
-    } catch { return ''; }
-  }
-
-  function esc(s) {
-    return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-  }
-
-  function extendedDataCell(raw) {
-    if (!raw) return '<span style="color:var(--text-muted)">—</span>';
-    let parsed;
-    try { parsed = JSON.parse(raw); } catch { return '<span style="color:var(--text-muted)">—</span>'; }
-    const ed = parsed?.extended_data;
-    if (!ed) return '<span style="color:var(--text-muted)">—</span>';
-
-    const rows = [];
-    if (ed.eventId)   rows.push(['Event ID', ed.eventId.slice(0, 8) + '…']);
-    if (ed.deviceId !== undefined) rows.push(['Device ID', ed.deviceId || '<span style="color:var(--text-muted)">—</span>']);
-    const uei = ed.userEndpointInfo;
-    if (uei) {
-      if (uei.type)            rows.push(['Type',    uei.type]);
-      if (uei.os?.family)      rows.push(['OS',      uei.os.family]);
-      if (uei.browser?.family) rows.push(['Browser', uei.browser.family]);
-      if (uei.device?.family)  rows.push(['Device',  uei.device.family]);
-    } else if (ed.uaInfo) {
-      if (ed.uaInfo.os)      rows.push(['OS',      ed.uaInfo.os]);
-      if (ed.uaInfo.browser) rows.push(['Browser', ed.uaInfo.browser]);
-    }
-
-    return `<div class="ext-data">${rows.map(([k,v]) =>
-      `<div><span class="ext-key">${esc(k)}:</span> ${v}</div>`
-    ).join('')}</div>`;
+  function statusBadge(status) {
+    if (status == null) return '<span class="badge badge-null">—</span>';
+    const s = Number(status);
+    const cls = s >= 200 && s < 300 ? 'badge-ok' : s >= 400 && s < 500 ? 'badge-warn' : 'badge-err';
+    return `<span class="badge ${cls}">${status}</span>`;
   }
 
   function prettyJson(raw) {
@@ -232,7 +180,7 @@
     document.getElementById('rowCount').textContent = '';
 
     try {
-      const res = await fetch('/api/kfp-log');
+      const res = await fetch('/api/talys-log');
       const rows = await res.json();
 
       if (!rows.length) {
@@ -250,11 +198,9 @@
             <tr>
               <th>#</th>
               <th>Дата</th>
-              <th>HTTP POST запрос</th>
+              <th>Event Type</th>
               <th>Тело запроса (JSON)</th>
-              <th>Уровень риска</th>
-              <th>Rule Versions</th>
-              <th>Extended Data</th>
+              <th>HTTP Статус</th>
             </tr>
           </thead>
           <tbody>
@@ -262,14 +208,9 @@
               <tr>
                 <td style="color:var(--text-muted); font-size:12px;">${rows.length - i}</td>
                 <td class="td-date">${formatDate(r.created_at)}</td>
-                <td class="td-url">${phaseFromUrl(r.request_url)}${
-                  r.request_url
-                    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-                }</td>
+                <td class="td-type"><span class="event-tag">${r.event_type || '—'}</span></td>
                 <td class="td-body">${prettyJson(r.request_body)}</td>
-                <td class="td-level">${levelBadge(r.response_level)}</td>
-                <td class="td-rules">${prettyJson(r.response_rule_versions)}</td>
-                <td class="td-ext">${extendedDataCell(r.response_raw)}</td>
+                <td class="td-status">${statusBadge(r.response_status)}</td>
               </tr>
             `).join('')}
           </tbody>

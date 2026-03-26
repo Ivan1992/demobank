@@ -29,7 +29,10 @@ const API = (() => {
     post: (ep, body) => request('POST', ep, body),
 
     /* Auth */
-    login: (username, password, ksid) => request('POST', '/auth/login', { username, password, ksid }),
+    login: (username, password, ksid) => request('POST', '/auth/login', {
+      username, password, ksid,
+      talys_enabled: localStorage.getItem('db_talys_enabled') !== 'false',
+    }),
     me:    () => request('GET', '/auth/me'),
 
     /* Accounts */
@@ -38,8 +41,8 @@ const API = (() => {
     checkAccount:   (number) => request('GET', `/accounts/check-account/${encodeURIComponent(number)}`),
     checkClient:    (query)  => request('GET', `/accounts/check-client/${encodeURIComponent(query)}`),
 
-    deposit:          (body) => request('POST', '/accounts/deposit', body),
-    transfer:         (body) => request('POST', '/accounts/transfer', body),
-    transferToClient: (body) => request('POST', '/accounts/transfer-to-client', body),
+    deposit:          (body) => request('POST', '/accounts/deposit',           { ...body, talys_enabled: localStorage.getItem('db_talys_enabled') !== 'false' }),
+    transfer:         (body) => request('POST', '/accounts/transfer',          { ...body, talys_enabled: localStorage.getItem('db_talys_enabled') !== 'false' }),
+    transferToClient: (body) => request('POST', '/accounts/transfer-to-client',{ ...body, talys_enabled: localStorage.getItem('db_talys_enabled') !== 'false' }),
   };
 })();

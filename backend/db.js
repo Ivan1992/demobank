@@ -54,6 +54,14 @@ db.exec(`
     response_rule_versions TEXT,
     response_raw TEXT
   );
+
+  CREATE TABLE IF NOT EXISTS talys_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    event_type TEXT,
+    request_body TEXT,
+    response_status INTEGER
+  );
 `);
 
 const userCount = db.prepare('SELECT COUNT(*) as count FROM users').get();

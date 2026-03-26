@@ -1,3 +1,6 @@
 node_modules/
 backend/bank.db
 .env
+backend/.env
+backend/certs/
+CLAUDE.md

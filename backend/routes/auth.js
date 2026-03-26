@@ -2,54 +2,16 @@ const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const https = require('https');
 const db = require('../db');
 const auth = require('../middleware/authMiddleware');
+const { checkKasperskyRisk } = require('../kfp');
+const { callTalys } = require('../talys');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'demobank-dev-secret-2024';
 
-function checkKasperskyRisk(ksid, username) {
-  return new Promise((resolve) => {
-    const params = new URLSearchParams({
-      cid: 'demobank',
-      ksid,
-      phase: 'login',
-      uid: username,
-      username,
-      action: 'risk_level',
-      result: 'success',
-      sf: 'false',
-      'rule-details': '1',
-    });
-    const url = `https://connect-romanovka.fp.kaspersky-labs.com/events?${params}`;
-
-    const req = https.request(url, { method: 'POST' }, (resp) => {
-      let data = '';
-      resp.on('data', (chunk) => { data += chunk; });
-      resp.on('end', () => {
-        let parsed = null;
-        try { parsed = JSON.parse(data); } catch { /* ignore */ }
-        try {
-          db.prepare(
-            'INSERT INTO kfp_log (request_url, request_body, response_level, response_rule_versions, response_raw) VALUES (?, ?, ?, ?, ?)'
-          ).run(
-            url, null,
-            parsed?.level ?? null,
-            parsed?.['rule_versions'] != null ? JSON.stringify(parsed['rule_versions']) : null,
-            data || null
-          );
-        } catch { /* never break main flow */ }
-        resolve(parsed);
-      });
-    });
-    req.on('error', () => resolve(null));
-    req.end();
-  });
-}
-
 // POST /api/auth/login
 router.post('/login', async (req, res) => {
-  const { username, password, ksid } = req.body;
+  const { username, password, ksid, talys_enabled } = req.body;
 
   if (!username || !password) {
     return res.status(400).json({ message: 'Введите логин и пароль' });
@@ -62,6 +24,7 @@ router.post('/login', async (req, res) => {
   }
 
   const risk = await checkKasperskyRisk(ksid ?? "empty", user.username);
+  callTalys(risk, { eventType: 'login', beneficiaryID: user.username, enabled: talys_enabled !== false });
   if (risk?.level === 'red') {
     return res.status(403).json({ message: 'Вам отказали во входе' });
   }

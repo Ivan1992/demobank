@@ -416,6 +416,15 @@ document.getElementById('clientTransferForm').addEventListener('submit', async (
   }
 });
 
+// ── Talys toggle ────────────────────────────────────────────
+(function () {
+  const toggle = document.getElementById('talysToggle');
+  toggle.checked = localStorage.getItem('db_talys_enabled') !== 'false';
+  toggle.addEventListener('change', () => {
+    localStorage.setItem('db_talys_enabled', toggle.checked ? 'true' : 'false');
+  });
+})();
+
 // ── Bootstrap ───────────────────────────────────────────────
 (async () => {
   initDate();
