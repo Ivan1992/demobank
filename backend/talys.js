@@ -6,7 +6,7 @@ const TALYS_URL = 'https://decision-integration-prod.demo.datasapience.ru/camel/
 function callTalys(kfpResponse, options) {
   if (!options.enabled) return;
   const token = process.env.TALYS_API_TOKEN;
-  if (!token) return;
+  //if (!token) return;
 
   const ed = kfpResponse?.extended_data || {};
   const uei = ed.userEndpointInfo || {};
