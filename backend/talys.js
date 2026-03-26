@@ -45,6 +45,7 @@ function callTalys(kfpResponse, options) {
         .run(options.eventType, bodyStr, resp.statusCode);
     } catch { /* never break main flow */ }
   });
+  req.setTimeout(8000, () => req.destroy());
   req.on('error', () => {
     try {
       db.prepare('INSERT INTO talys_log (event_type, request_body, response_status) VALUES (?, ?, ?)')
